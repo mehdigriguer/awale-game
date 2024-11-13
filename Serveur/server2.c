@@ -104,7 +104,7 @@ static void app(void)
          {
             initialize_game(&game);
             game_started = 1;
-            send_message_to_all_clients(clients, c, actual, "La partie commence!", 1);
+            broadcast(clients, actual, "La partie commence!");
          }
       }
       else if (game_started)
@@ -181,6 +181,18 @@ static void remove_client(Client *clients, int to_remove, int *actual)
    memmove(clients + to_remove, clients + to_remove + 1, (*actual - to_remove - 1) * sizeof(Client));
    /* number client - 1 */
    (*actual)--;
+}
+
+static void broadcast(Client *clients,  int actual, const char *buffer)
+{
+   int i = 0;
+   char message[BUF_SIZE];
+   message[0] = 0;
+   for(i = 0; i < actual; i++)
+   {
+      strncat(message, buffer, sizeof message - strlen(message) - 1);
+      write_client(clients[i].sock, message);
+   }
 }
 
 static void send_message_to_all_clients(Client *clients, Client sender, int actual, const char *buffer, char from_server)
