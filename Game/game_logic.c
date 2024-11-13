@@ -20,7 +20,7 @@ void initialize_game(GameState *game) {
 
 // Print the board in ASCII format
 void print_board(const GameState *game) {
-    printf("\nPlayer 2\n");
+    printf("Joueur 2\n");
     for (int j = NUM_PITS - 1; j >= 0; j--) {
         printf(" %d ", game->pits[1][j]);
     }
@@ -29,7 +29,7 @@ void print_board(const GameState *game) {
     for (int i = 0; i < NUM_PITS; i++) {
         printf(" %d ", game->pits[0][i]);
     }
-    printf("\nPlayer 1\n");
+    printf("\nJoueur 1\n");
 }
 
 
@@ -122,6 +122,8 @@ int main() {
     printf("Choisissez le sens de rotation (1 pour anti-horaire, 2 pour horaire) : ");
     int sensRotation;
     scanf("%d", &sensRotation);
+    
+    printf("-------------------------------------------------------------\n");
 
     while (!check_game_end(&game) && has_seeds(&game, 0) && has_seeds(&game, 1)) {
         print_board(&game);
