@@ -114,3 +114,43 @@ int determine_winner(GameState *game) {
         return -1; // Tie
     }
 }
+
+int main() {
+    GameState game;
+    initialize_game(&game);
+    
+    printf("Choisissez le sens de rotation (1 pour anti-horaire, 2 pour horaire) : ");
+    int sensRotation;
+    scanf("%d", &sensRotation);
+
+    while (!check_game_end(&game) && has_seeds(&game, 0) && has_seeds(&game, 1)) {
+        print_board(&game);
+        
+        int joueur = game.current_turn + 1;
+        printf("Joueur %d, choisissez un trou (0-5 pour joueur 1, 6-11 pour joueur 2): ", joueur);
+        int trou;
+        scanf("%d", &trou);
+
+        int result = make_move(&game, game.current_turn, trou);
+        if (result == -1) {
+            printf("Coup invalide. Essayez de nouveau.\n");
+        } else if (result == -2) {
+            printf("Coup invalide, cela affamerait l'adversaire. Essayez de nouveau.\n");
+        }
+
+        printf("-------------------------------------------------------------\n");
+    }
+
+    print_board(&game);
+
+    int winner = determine_winner(&game);
+    if (winner == 0) {
+        printf("Joueur 1 gagne!\n");
+    } else if (winner == 1) {
+        printf("Joueur 2 gagne!\n");
+    } else {
+        printf("Match nul!\n");
+    }
+
+    return 0;
+}
