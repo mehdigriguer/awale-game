@@ -5,6 +5,7 @@
 
 #include "server2.h"
 #include "client2.h"
+#include "game_logic.h"
 
 static void init(void)
 {
@@ -35,6 +36,8 @@ static void app(void)
    int max = sock;
    /* an array for all clients */
    Client clients[MAX_CLIENTS];
+   GameState game;
+   int game_started = 0;
 
    fd_set rdfs;
 
@@ -95,38 +98,72 @@ static void app(void)
          strncpy(c.name, buffer, BUF_SIZE - 1);
          clients[actual] = c;
          actual++;
-      }
-      else
-      {
-         int i = 0;
-         for(i = 0; i < actual; i++)
+
+         // Démarrer le jeu lorsque deux clients sont connectés
+         if (actual == 2 && !game_started)
          {
-            /* a client is talking */
-            if(FD_ISSET(clients[i].sock, &rdfs))
+            initialize_game(&game);
+            game_started = 1;
+            send_message_to_all_clients(clients, c, actual, "La partie commence!", 1);
+         }
+      }
+      else if (game_started)
+        {
+         for (i = 0; i < actual; i++)
+         {
+            if (FD_ISSET(clients[i].sock, &rdfs))
             {
                Client client = clients[i];
                int c = read_client(clients[i].sock, buffer);
-               /* client disconnected */
-               if(c == 0)
+
+               if (c == 0)
                {
                   closesocket(clients[i].sock);
                   remove_client(clients, i, &actual);
-                  strncpy(buffer, client.name, BUF_SIZE - 1);
-                  strncat(buffer, " disconnected !", BUF_SIZE - strlen(buffer) - 1);
-                  send_message_to_all_clients(clients, client, actual, buffer, 1);
+                  game_started = 0;
+                  send_message_to_all_clients(clients, client, actual, "Un joueur s'est déconnecté. La partie est annulée.", 1);
                }
                else
                {
-                  send_message_to_all_clients(clients, client, actual, buffer, 0);
+                  int move = atoi(buffer);
+                  int result = make_move(&game, game.current_turn, move);
+
+                  if (result == -1)
+                  {
+                        write_client(client.sock, "Coup invalide. Essayez de nouveau.\n");
+                  }
+                  else if (result == -2)
+                  {
+                        write_client(client.sock, "Coup invalide, cela affamerait l'adversaire. Essayez de nouveau.\n");
+                  }
+                  else
+                  {
+                        if (check_game_end(&game))
+                        {
+                           int winner = determine_winner(&game);
+                           if (winner == 0)
+                              send_message_to_all_clients(clients, client, actual, "Joueur 1 gagne!", 1);
+                           else if (winner == 1)
+                              send_message_to_all_clients(clients, client, actual, "Joueur 2 gagne!", 1);
+                           else
+                              send_message_to_all_clients(clients, client, actual, "Match nul!", 1);
+
+                           game_started = 0;
+                        }
+                        else
+                        {
+                           print_board(&game);
+                        }
+                  }
                }
                break;
             }
          }
-      }
-   }
+        }
+    }
 
-   clear_clients(clients, actual);
-   end_connection(sock);
+    clear_clients(clients, actual);
+    end_connection(sock);
 }
 
 static void clear_clients(Client *clients, int actual)
