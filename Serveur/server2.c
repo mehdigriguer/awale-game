@@ -108,7 +108,7 @@ static void app(void)
          }
       }
       else if (game_started)
-        {
+      {
          for (i = 0; i < actual; i++)
          {
             if (FD_ISSET(clients[i].sock, &rdfs))
@@ -128,40 +128,50 @@ static void app(void)
                   int move = atoi(buffer);
                   int result = make_move(&game, game.current_turn, move);
 
-                  if (result == -1)
+                  // Vérifier si c'est le tour du joueur
+                  if (i != game.current_turn)
                   {
+                     write_client(client.sock, "Ce n'est pas votre tour.\n");
+                  }
+                  else 
+                  {
+                     if (result == -1)
+                     {
                         write_client(client.sock, "Coup invalide. Essayez de nouveau.\n");
-                  }
-                  else if (result == -2)
-                  {
-                        write_client(client.sock, "Coup invalide, cela affamerait l'adversaire. Essayez de nouveau.\n");
-                  }
-                  else
-                  {
-                        if (check_game_end(&game))
-                        {
+                     }
+                     else if (result == -2)
+                     {
+                        write_client(client.sock, "Coup invalide l'adversaire. Essayez de nouveau.\n");
+                     }
+                     else if (result >= 0) {
+                        char board_buffer[BUF_SIZE];
+                        board_in_buffer(&game, board_buffer, sizeof(board_buffer));
+                        broadcast(clients, actual, board_buffer);
+
+                        if (check_game_end(&game)) {
                            int winner = determine_winner(&game);
                            if (winner == 0)
-                              send_message_to_all_clients(clients, client, actual, "Joueur 1 gagne!", 1);
+                                 send_message_to_all_clients(clients, client, actual, "Joueur 1 gagne!", 1);
                            else if (winner == 1)
-                              send_message_to_all_clients(clients, client, actual, "Joueur 2 gagne!", 1);
+                                 send_message_to_all_clients(clients, client, actual, "Joueur 2 gagne!", 1);
                            else
-                              send_message_to_all_clients(clients, client, actual, "Match nul!", 1);
+                                 send_message_to_all_clients(clients, client, actual, "Match nul!", 1);
 
                            game_started = 0;
+                        } else {
+                           game.current_turn = (game.current_turn + 1) % 2; // Passer au tour suivant seulement si le coup est valide
+                           char turn_message[BUF_SIZE];
+                           snprintf(turn_message, sizeof(turn_message), "C'est le tour du Joueur %d.\n", game.current_turn + 1);
+                           broadcast(clients, actual, turn_message);
                         }
-                        else
-                        {
-                           print_board(&game);
-                        }
+                     }
                   }
+                  break;
                }
-               break;
             }
          }
-        }
-    }
-
+      }
+   }
     clear_clients(clients, actual);
     end_connection(sock);
 }
@@ -188,9 +198,9 @@ static void broadcast(Client *clients,  int actual, const char *buffer)
    int i = 0;
    char message[BUF_SIZE];
    message[0] = 0;
+   strncat(message, buffer, sizeof message - strlen(message) - 1);
    for(i = 0; i < actual; i++)
    {
-      strncat(message, buffer, sizeof message - strlen(message) - 1);
       write_client(clients[i].sock, message);
    }
 }

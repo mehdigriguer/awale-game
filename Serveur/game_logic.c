@@ -18,20 +18,20 @@ void initialize_game(GameState *game) {
     game->current_turn = 0; // Player 1 starts
 }
 
-// Print the board in ASCII format
-void print_board(const GameState *game) {
-    printf("Joueur 2\n");
+void board_in_buffer(const GameState *game, char *buffer, size_t size) {
+    snprintf(buffer, size, "Joueur 2\n");
+    
     for (int j = NUM_PITS - 1; j >= 0; j--) {
-        printf(" %d ", game->pits[1][j]);
+        snprintf(buffer + strlen(buffer), size - strlen(buffer), " %d ", game->pits[1][j]);
     }
-    printf("\n");
+    snprintf(buffer + strlen(buffer), size - strlen(buffer), "\n");
 
     for (int i = 0; i < NUM_PITS; i++) {
-        printf(" %d ", game->pits[0][i]);
+        snprintf(buffer + strlen(buffer), size - strlen(buffer), " %d ", game->pits[0][i]);
     }
-    printf("\nJoueur 1\n");
-}
 
+    snprintf(buffer + strlen(buffer), size - strlen(buffer), "\nJoueur 1\n");
+}
 
 // Helper function to check if a player has any seeds left in their pits
 int has_seeds(GameState *game, int player) {

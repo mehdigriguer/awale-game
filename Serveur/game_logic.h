@@ -5,6 +5,9 @@
 #ifndef GAME_LOGIC_H
 #define GAME_LOGIC_H
 
+#include <sys/types.h>
+#include <unistd.h> /* close */
+
 #define NUM_PITS 6
 #define INITIAL_SEEDS 4
 
@@ -19,7 +22,7 @@ typedef struct {
 void distribute_remaining_seeds(GameState *game);
 int has_seeds(GameState *game, int player);
 void initialize_game(GameState *game);
-void print_board(const GameState *game);
+void board_in_buffer(const GameState *game, char *buffer, size_t size);
 int make_move(GameState *game, int player, int pit_index);
 int check_game_end(GameState *game);
 int determine_winner(GameState *game);

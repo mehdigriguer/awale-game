@@ -28,7 +28,7 @@ typedef struct in_addr IN_ADDR;
 #endif
 
 #define CRLF     "\r\n"
-#define PORT     1977
+#define PORT     1979
 
 #define BUF_SIZE 1024
 
